@@ -22,6 +22,8 @@
     new_system = true # UpdatedLagrangianStressDivergence kernels are "new"
     formulation = UPDATED # UpdatedLagrangianStressDivergence kernel
     volumetric_locking_correction = true
+    generate_output = 'hydrostatic_pk2_stress l2norm_cauchy_stress l2norm_strain'
+    # 80% sure l2norm_strain is true strain (read docs best I could)
   []
 []
 
@@ -101,13 +103,13 @@
   nl_abs_tol = 1e-10
   # line_search = l2
 
-  [Adaptivity]
-    interval = 1
-    refine_fraction = 0.1
-    coarsen_fraction = 0.1
-    max_h_level = 3
-    start_time = .09
-  []
+  # [Adaptivity]
+  #   interval = 1
+  #   refine_fraction = 0.1
+  #   coarsen_fraction = 0.1
+  #   max_h_level = 3
+  #   start_time = .09
+  # []
 
   [TimeStepper]
     type = FunctionDT
