@@ -24,6 +24,9 @@ ComputeMooneyRivlinStress::validParams()
                                         "c2",
                                         "2nd coefficient (C_01) for"
                                         " 2 parameter Mooney-Rivlin material");
+  params.addParam<MaterialPropertyName>("B0",
+                                        "B0",
+                                        "Scale factor for Beta coefficient");
 
   return params;
 }
@@ -31,7 +34,8 @@ ComputeMooneyRivlinStress::validParams()
 ComputeMooneyRivlinStress::ComputeMooneyRivlinStress(const InputParameters & parameters)
   : ComputeLagrangianStressPK2(parameters),
     _c1(getMaterialProperty<Real>(getParam<MaterialPropertyName>("c1"))),
-    _c2(getMaterialProperty<Real>(getParam<MaterialPropertyName>("c2")))
+    _c2(getMaterialProperty<Real>(getParam<MaterialPropertyName>("c2"))),
+    _B0(getMaterialProperty<Real>(getParam<MaterialPropertyName>("B0")))
 
 {
 }
@@ -50,14 +54,13 @@ void ComputeMooneyRivlinStress::computeQpPK2Stress()
 
     double C1 = _c1[_qp]; // kPa
     double C2 = _c2[_qp]; // kPa
-    double B = std::pow(10, 5) * std::max(C1,C2); // Beta
+    double B0 = _B0[_qp]; 
+    double B = B0 * std::max(C1,C2); // Beta
     double p0 = 2*C2-C1;
 
     RankTwoTensor S = 2 * (C1 * RankTwoTensor::Identity() + C2 * (I1 * RankTwoTensor::Identity() - C.transpose())) + 2 * (p0 + B * std::log(I3)) * Cinv;
     
-    RankFourTensor C_tangent1 = 2 * C2 * (RankTwoTensor::Identity().times<i_, j_, k_, l_>(RankTwoTensor::Identity()) - RankTwoTensor::Identity().times<j_, k_, i_, l_>(RankTwoTensor::Identity())) - (2 * p0 + 2 * B * std::log(I3)) * Cinv.times<i_, k_, l_, j_>(Cinv) + 2 * B * Cinv.times<i_, j_, l_, k_>(Cinv);
-    RankFourTensor C_tangent2 = RankTwoTensor::Identity().times<j_, l_, i_, k_>(_F[_qp].transpose()) + RankTwoTensor::Identity().times<i_, l_, k_, j_>(_F[_qp]);
-    RankFourTensor C_tangent = C_tangent1*C_tangent2;
+    RankFourTensor C_tangent = 4 * (C2 * (RankTwoTensor::Identity().times<i_, j_, k_, l_>(RankTwoTensor::Identity()) - RankTwoTensor::Identity().times<j_, k_, i_, l_>(RankTwoTensor::Identity())) - (p0 + B * std::log(I3)) * Cinv.times<i_, k_, l_, j_>(Cinv) + B * Cinv.times<i_, j_, l_, k_>(Cinv));
 
     _S[_qp] = S;
     _C[_qp] = C_tangent;

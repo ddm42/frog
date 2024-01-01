@@ -41,4 +41,5 @@ protected:
 protected:
   const MaterialProperty<Real> & _c1;
   const MaterialProperty<Real> & _c2;
+  const MaterialProperty<Real> & _B0;
 };
